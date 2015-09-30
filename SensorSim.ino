@@ -34,28 +34,28 @@ SUI_DeclareString(device_greeting,
 
 SUI_DeclareString(top_menu_title, "*SensorSim* v1.0 Main Menu");
 
-SUI_DeclareString(help_key, "help");
-
 SUI_DeclareString(outs_key, "outputs");
 SUI_DeclareString(outs_help, "Control Outputs");
 
 SUI_DeclareString(toggle_out0_key, "output_0");
 SUI_DeclareString(toggle_out0_help, "Turn Output On/Off");
 
-SUI_DeclareString(set_long_out0_key, "0_dc");
-SUI_DeclareString(set_long_out0_help, "Set the duty cycle %");
+SUI_DeclareString(set_floatOut0_key, "0_dc");
+SUI_DeclareString(set_floatOut0_help, "Set the duty cycle %");
 
 SUI_DeclareString(toggle_out1_key, "output_1");
 SUI_DeclareString(toggle_out1_help, "Turn Output On/Off");
 
-SUI_DeclareString(set_long_out1_key, "1_dc");
-SUI_DeclareString(set_long_out1_help, "Set the duty cycle %");
+SUI_DeclareString(set_floatOut1_key, "1_dc");
+SUI_DeclareString(set_floatOut1_help, "Set the duty cycle %");
 
 SUI_DeclareString(toggle_out2_key, "output_2");
 SUI_DeclareString(toggle_out2_help, "Turn Output On/Off");
 
-SUI_DeclareString(set_long_out2_key, "2_dc");
-SUI_DeclareString(set_long_out2_help, "Set the duty cycle %");
+SUI_DeclareString(set_floatOut2_key, "2_dc");
+SUI_DeclareString(set_floatOut2_help, "Set the duty cycle %");
+
+SUI_DeclareString(help_key, "help");
 
 SUI_DeclareString(exit_key, "exit");
 SUI_DeclareString(exit_help, "Exit (and close SensorSim)");
@@ -86,9 +86,10 @@ SUI::SerialUI mySUI = SUI::SerialUI(device_greeting);
  */
 
 unsigned long CurTime = 0;
-unsigned long long_out0 = 0;
-unsigned long long_out1 = 0;
-unsigned long long_out2 = 0;
+//Default PWM value of ~50%
+float floatOut0 = 127;
+float floatOut1 = 127;
+float floatOut2 = 127;
 bool  swOut0 = false;
 bool  swOut1 = false;
 bool  swOut2 = false;
@@ -127,9 +128,9 @@ void setup()
   mySUI.trackState(label_swOut0, &swOut0);
   mySUI.trackState(label_swOut1, &swOut1);
   mySUI.trackState(label_swOut2, &swOut2);
-  mySUI.trackState(label_long0, &long_out0);
-  mySUI.trackState(label_long1, &long_out1);
-  mySUI.trackState(label_long2, &long_out2);
+  mySUI.trackState(label_long0, &floatOut0);
+  mySUI.trackState(label_long1, &floatOut1);
+  mySUI.trackState(label_long2, &floatOut2);
   mySUI.trackState(label_time, &CurTime);
   // and that's it, you're variables will be displayed in the druid GUI
 
@@ -142,7 +143,7 @@ void setup()
   // of its own at the bottom of the program.
   // Yes: *DO* check it out!
   setupMenus();
-
+  pinMode(3, OUTPUT);
 }
 
 
@@ -202,7 +203,13 @@ void toggle_out0()
   swOut0 = !swOut0;
   mySUI.print(F("Output #0 is "));
   mySUI.println(swOut0 ? F("ON") : F("OFF"));
-
+  if (swOut0){
+    //50% duty cycle default when initially turning on
+    analogWrite(3, floatOut0);
+    }
+  else{
+    analogWrite(3, 0);
+    }
   return mySUI.returnOK();
 }
 
@@ -211,7 +218,13 @@ void toggle_out1()
   swOut1 = !swOut1;
   mySUI.print(F("Output #1 is "));
   mySUI.println(swOut1 ? F("ON") : F("OFF"));
-
+  if (swOut1){
+    //50% duty cycle default when initially turning on
+    analogWrite(5, floatOut1);
+    }
+  else{
+    analogWrite(5, 0);
+    }
   return mySUI.returnOK();
 }
 
@@ -220,11 +233,17 @@ void toggle_out2()
   swOut2 = !swOut2;
   mySUI.print(F("Output #2 is "));
   mySUI.println(swOut2 ? F("ON") : F("OFF"));
-
+  if (swOut2){
+    //50% duty cycle default when initially turning on
+    analogWrite(6, floatOut1);
+    }
+  else{
+    analogWrite(6, 0);
+    }
   return mySUI.returnOK();
 }
 
-void set_long_out0()
+void set_floatOut0()
 {
   // Here, we want some additional (numerical) input from
   // the user, so we show the "enter data prompt"
@@ -234,14 +253,20 @@ void set_long_out0()
   // Now, we actually get the input
   // we can use any Serial method on our SerialUI
   // object, so:
-  long_out0 = mySUI.parseInt();
-
+  floatOut0 = mySUI.parseInt();
+  if(swOut0){
+  floatOut0 = (floatOut0/100) * 255;
+  analogWrite(3, floatOut0);
   // provide some feedback
-  mySUI.println(long_out0, DEC);
+  mySUI.println(floatOut0, DEC);
+  }
+  else{
+    mySUI.println("Please turn the output on first.");
+    }
   mySUI.returnOK();
 }
 
-void set_long_out1()
+void set_floatOut1()
 {
   // Here, we want some additional (numerical) input from
   // the user, so we show the "enter data prompt"
@@ -251,14 +276,20 @@ void set_long_out1()
   // Now, we actually get the input
   // we can use any Serial method on our SerialUI
   // object, so:
-  long_out1 = mySUI.parseInt();
-
+  floatOut1 = mySUI.parseInt();
+  if(swOut1){
+  floatOut1 = (floatOut1/100) * 255;
+  analogWrite(5, floatOut1);
   // provide some feedback
-  mySUI.println(long_out1, DEC);
+  mySUI.println(floatOut0, DEC);
+  }
+  else{
+    mySUI.println("Please turn the output on first.");
+    }
   mySUI.returnOK();
 }
 
-void set_long_out2()
+void set_floatOut2()
 {
   // Here, we want some additional (numerical) input from
   // the user, so we show the "enter data prompt"
@@ -268,10 +299,16 @@ void set_long_out2()
   // Now, we actually get the input
   // we can use any Serial method on our SerialUI
   // object, so:
-  long_out2 = mySUI.parseInt();
-
+  floatOut2 = mySUI.parseInt();
+  if(swOut2){
+  floatOut2 = (floatOut2/100) * 255;
+  analogWrite(6, floatOut2);
   // provide some feedback
-  mySUI.println(long_out2, DEC);
+  mySUI.println(floatOut2, DEC);
+  }
+  else{
+    mySUI.println("Please turn the output on first.");
+    }
   mySUI.returnOK();
 }
 
@@ -307,12 +344,6 @@ void setupMenus()
   }
 
   mainMenu->setName(top_menu_title);
-
-  if (! mainMenu->addCommand(help_key, show_help) )
-  {
-    return mySUI.returnError_P(err_cantadd_command);
-
-  }
   
   SUI::Menu * outsMenu = mainMenu->subMenu(outs_key, outs_help);
   if (! outsMenu)
@@ -323,14 +354,18 @@ void setupMenus()
 
   // output menu created, add our commands
   outsMenu->addCommand(toggle_out0_key, toggle_out0, toggle_out0_help);
-  outsMenu->addCommand(set_long_out0_key, set_long_out0, set_long_out0_help);
+  outsMenu->addCommand(set_floatOut0_key, set_floatOut0, set_floatOut0_help);
   outsMenu->addCommand(toggle_out1_key, toggle_out1, toggle_out1_help);
-  outsMenu->addCommand(set_long_out1_key, set_long_out1, set_long_out1_help);
+  outsMenu->addCommand(set_floatOut1_key, set_floatOut1, set_floatOut1_help);
   outsMenu->addCommand(toggle_out2_key, toggle_out2, toggle_out2_help);
-  outsMenu->addCommand(set_long_out2_key, set_long_out2, set_long_out2_help);
-
-
+  outsMenu->addCommand(set_floatOut2_key, set_floatOut2, set_floatOut2_help);
   // exit
+
+  if (! mainMenu->addCommand(help_key, show_help) )
+  {
+    return mySUI.returnError_P(err_cantadd_command);
+
+  }
   if (! mainMenu->addCommand(exit_key, do_exit, exit_help) )
     return mySUI.returnError_P(err_cantadd_command);
 
